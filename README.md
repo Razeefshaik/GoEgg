@@ -1,4 +1,4 @@
-# pareg — a parallel e-graph / equality-saturation engine in Go
+# GoEgg — a parallel e-graph / equality-saturation engine in Go
 
 > This is the **interactive showcase branch** (`showcase`): `showcase/index.html`
 > is a self-contained, JS-ported visualization of the sequential algorithm you
@@ -7,7 +7,7 @@
 > visualization, not the compiled Go engine — see `master` for that, or
 > `release/lib` for the tagged library distribution.
 
-`pareg` is an [e-graph](https://en.wikipedia.org/wiki/E-graph) (equality
+`GoEgg` is an [e-graph](https://en.wikipedia.org/wiki/E-graph) (equality
 graph) library with equality-saturation-style term rewriting, built the way
 [`egg`](https://egraphs-good.github.io/) works in Rust — union-find over
 e-classes, a hashcons memo table, and a deferred "rebuild" that restores
