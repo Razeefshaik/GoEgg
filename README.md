@@ -1,4 +1,4 @@
-# pareg — a parallel e-graph / equality-saturation engine in Go
+# GoEgg — a parallel e-graph / equality-saturation engine in Go
 
 `pareg` is an [e-graph](https://en.wikipedia.org/wiki/E-graph) (equality
 graph) library with equality-saturation-style term rewriting, built the way
