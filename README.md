@@ -7,6 +7,48 @@
 > visualization, not the compiled Go engine — see `master` for that, or
 > `release/lib` for the tagged library distribution.
 
+## Running the showcase
+
+No Go toolchain, no build step, no server required:
+
+```
+git checkout showcase
+open showcase/index.html          # macOS
+start showcase/index.html         # Windows
+xdg-open showcase/index.html      # Linux
+```
+
+...or just double-click the file in a file browser. It's a single
+self-contained HTML file — everything (styling, fonts via a Google
+Fonts link, and the whole simulation engine) is inline, so it works
+straight from disk with no local server.
+
+### What you can do on the page
+
+1. **Pick a starting expression** from the preset dropdown — e.g.
+   `(x × 1) + 0`, or a commutativity/associativity case that never
+   collapses to fewer classes, to see e-graphs "explode" without a
+   simplifying rule to bring them back down.
+2. **Toggle which rewrite rules are active** (`mul-one`, `add-zero`,
+   `comm-add`, `assoc-add`, ...) — each is shown as its actual
+   pattern, e.g. `(× ?a 1) → ?a`.
+3. **Step one round at a time** with *Step*, to watch a single
+   search → apply → rebuild cycle and read exactly what matched and
+   how many unions it caused in the log panel — or hit *Run to
+   saturation* to animate straight through to the fixed point.
+4. **Extract the cheapest term** at any point to highlight, right on
+   the diagram, which e-node in each e-class the cost analysis
+   picked, and see the resulting term and its cost.
+5. **Reset** to rebuild the original expression and start over, or
+   switch presets to try a different starting shape entirely.
+
+The live e-graph diagram itself is the point: e-classes render as
+cards containing their e-nodes, edges show which e-classes a node's
+children currently canonicalize to, and both update after every
+round — so the abstract "union-find + hashcons + congruence closure"
+description in the rest of this README becomes something you can
+watch happen.
+
 `GoEgg` is an [e-graph](https://en.wikipedia.org/wiki/E-graph) (equality
 graph) library with equality-saturation-style term rewriting, built the way
 [`egg`](https://egraphs-good.github.io/) works in Rust — union-find over
