@@ -39,11 +39,6 @@ func (g *EGraph) ParallelExtract(root Id, cost CostFn, workers int) (*Term, floa
 	}
 	chunk := (len(ids) + n - 1) / n
 
-	// Two fixed pairs of buffers, reused every round by swapping which
-	// is "current" and which is "next" -- avoids reallocating (and
-	// zeroing/copying into) four slices of size `size` on every round,
-	// which for a large e-graph run over many rounds can otherwise
-	// dwarf the actual per-e-class work being parallelized.
 	costA := make([]float64, size)
 	costB := make([]float64, size)
 	bestA := make([]ENode, size)
@@ -81,10 +76,7 @@ func (g *EGraph) ParallelExtract(root Id, cost CostFn, workers int) (*Term, floa
 					class := g.classes[id]
 					bestCost, bestNode, ok := bestOfSlice(g, cur, class, cost)
 					if ok && bestCost < cur[id] {
-						// Safe without a lock: each id belongs to
-						// exactly one goroutine's chunk, and every
-						// write here lands at index id, which no
-						// other goroutine this round ever touches.
+
 						next[id] = bestCost
 						nextBest[id] = bestNode
 						nextHave[id] = true
@@ -110,11 +102,6 @@ func (g *EGraph) ParallelExtract(root Id, cost CostFn, workers int) (*Term, floa
 	return buildTermFromSlice(g, best, haveBest, r), cur[r]
 }
 
-// bestOfSlice is bestOf's twin, reading a []float64 snapshot indexed
-// by canonical Id instead of a map, and canonicalizing children with
-// findRO — the same stale-child-reference fix bestOf needs (see its
-// comment in extract.go), done through the read-only accessor since
-// this runs concurrently with other e-classes' bestOfSlice calls.
 func bestOfSlice(g *EGraph, costSnapshot []float64, class *EClass, cost CostFn) (float64, ENode, bool) {
 	bestCost := math.Inf(1)
 	var bestNode ENode

@@ -26,8 +26,7 @@ func TestAddCongruence(t *testing.T) {
 	x := g.Add(ENode{Op: "x"})
 	y := g.Add(ENode{Op: "y"})
 	f1 := g.Add(ENode{Op: "f", Children: []Id{x}})
-	// Adding the identical node again must return the SAME e-class,
-	// not a new one.
+
 	f1again := g.Add(ENode{Op: "f", Children: []Id{x}})
 	if f1 != f1again {
 		t.Fatalf("adding an identical e-node should reuse the e-class")
@@ -37,8 +36,6 @@ func TestAddCongruence(t *testing.T) {
 		t.Fatalf("f(x) and f(y) should NOT be congruent before x=y")
 	}
 
-	// Union x and y; after Rebuild, f(x) and f(y) must become
-	// congruent and end up in the same e-class (upward merging).
 	g.Union(x, y)
 	g.Rebuild()
 	if g.Find(f1) != g.Find(f2) {
@@ -58,7 +55,7 @@ func TestRebuildIsIdempotent(t *testing.T) {
 
 func arith() (*EGraph, *Term) {
 	g := NewEGraph()
-	// (x * 1) + (0 * y)   -- should simplify all the way to x.
+
 	term := Node("+",
 		Node("*", Leaf("x"), Leaf("1")),
 		Node("*", Leaf("0"), Leaf("y")),
@@ -99,11 +96,7 @@ func TestSaturationSimplifiesArithmetic(t *testing.T) {
 func TestExtractPicksCheapestEquivalentTerm(t *testing.T) {
 	g := NewEGraph()
 	x := g.AddTerm(Leaf("x"))
-	// Build "x*2" and separately "x+x", then declare them equal by
-	// hand (as a real strength-reduction rule would): extraction with
-	// AstSizeCost must prefer x*2 (3 nodes) over x+x (3 nodes are
-	// equal here, so use a rule that's actually asymmetric: x+x+x+x
-	// vs x*4).
+
 	four := g.AddTerm(Leaf("4"))
 	mul := g.Add(ENode{Op: "*", Children: []Id{x, four}})
 	sum := g.AddTerm(Node("+", Node("+", Node("+", Leaf("x"), Leaf("x")), Leaf("x")), Leaf("x")))
@@ -129,16 +122,11 @@ func TestExtractHandlesStaleChildReferences(t *testing.T) {
 	b := g.AddTerm(Leaf("b"))
 	f := g.Add(ENode{Op: "f", Children: []Id{a}})
 
-	// Force `a` (not `b`) to become the union-find loser: EGraph.Union
-	// keeps its first argument's root on a rank tie, so unioning with
-	// b first makes a the one that gets merged away.
 	g.Union(b, a)
 	g.Rebuild()
 	if g.Find(a) == a {
 		t.Fatalf("test setup assumption broken: expected a's class to have been merged away")
 	}
-	// f's stored node is still literally f(a) with the now-dead id a;
-	// nothing rewrites it in place.
 
 	term, cost := g.Extract(f, AstSizeCost)
 	if cost != 2 {
@@ -150,15 +138,12 @@ func TestExtractHandlesStaleChildReferences(t *testing.T) {
 }
 
 func TestCyclicEGraphExtractionTerminates(t *testing.T) {
-	// A rule set that can make an e-class contain a node that
-	// (transitively) refers back to itself, e.g. x*1 = x creates a
-	// class equal to a node built from that very class. Extraction
-	// must still terminate and find the finite representative.
+
 	g := NewEGraph()
 	x := g.AddTerm(Leaf("x"))
 	one := g.AddTerm(Leaf("1"))
 	mul := g.Add(ENode{Op: "*", Children: []Id{x, one}})
-	g.Union(x, mul) // x = x*1, a self-referential equivalence
+	g.Union(x, mul)
 	g.Rebuild()
 
 	term, cost := g.Extract(x, AstSizeCost)

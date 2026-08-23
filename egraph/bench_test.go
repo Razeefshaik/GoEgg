@@ -6,8 +6,6 @@ import (
 	"testing"
 )
 
-// randTerm builds a random arithmetic expression of the given depth
-// over vars ∪ {"0","1"}, using "+" and "*".
 func randTerm(rnd *rand.Rand, vars []string, depth int) *Term {
 	if depth <= 0 || rnd.Intn(3) == 0 {
 		if rnd.Intn(2) == 0 {
@@ -22,10 +20,6 @@ func randTerm(rnd *rand.Rand, vars []string, depth int) *Term {
 	return Node(op, randTerm(rnd, vars, depth-1), randTerm(rnd, vars, depth-1))
 }
 
-// buildBenchGraph builds a large e-graph of numExprs random expressions
-// (each of the given depth) over numVars variables, so SearchAll,
-// Rebuild, and Extract all have enough real work to make parallel
-// speedup measurable rather than noise.
 func buildBenchGraph(numVars, numExprs, depth int) *EGraph {
 	g := NewEGraph()
 	rnd := rand.New(rand.NewSource(1))

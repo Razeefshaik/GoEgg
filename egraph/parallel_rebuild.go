@@ -5,26 +5,15 @@ import (
 	"sync"
 )
 
-// repairPlan is the read-only outcome of analyzing one dirty
-// e-class's parent list: everything repair() (egraph.go) would have
-// mutated, computed without mutating anything. ParallelRebuild
-// computes these for a whole round's worklist concurrently (Phase A),
-// then applies them single-threaded (Phase B).
 type repairPlan struct {
 	classID     Id
 	deleteKeys  []string
 	insertKeys  []string
 	insertClass []Id
 	newParents  []parentEdge
-	unions      [][2]Id // pairs of parent-owning classes discovered congruent
+	unions      [][2]Id
 }
 
-// planRepair mirrors repair()'s logic exactly, but reads only via
-// findRO (never Find, which path-compresses) and returns a plan
-// instead of mutating g. Safe to call concurrently with other
-// planRepair calls for other e-classes in the same round, because
-// nothing in this round has mutated g yet -- that only happens once
-// all of the round's plans are in hand (see ParallelRebuild).
 func (g *EGraph) planRepair(id Id) repairPlan {
 	class := g.classes[id]
 	plan := repairPlan{classID: id}
@@ -53,7 +42,6 @@ func (g *EGraph) planRepair(id Id) repairPlan {
 	return plan
 }
 
-// canonicalizeRO is canonicalize's read-only twin, using findRO.
 func (g *EGraph) canonicalizeRO(n ENode) ENode {
 	out := ENode{Op: n.Op, Children: make([]Id, len(n.Children))}
 	for i, c := range n.Children {
@@ -102,10 +90,7 @@ func (g *EGraph) ParallelRebuild(workers int) {
 		if n < 1 {
 			n = 1
 		}
-		// Static contiguous split, same rationale as ParallelSearchAll:
-		// a channel-per-item queue would add per-item synchronization
-		// cost that a single dirty e-class's repair (often just a
-		// handful of parent edges) may not be big enough to amortize.
+
 		chunk := (len(todo) + n - 1) / n
 		var wg sync.WaitGroup
 		for w := 0; w < n; w++ {
@@ -127,8 +112,6 @@ func (g *EGraph) ParallelRebuild(workers int) {
 		}
 		wg.Wait()
 
-		// Phase B, pass 1: hashcons fixups + install each class's own
-		// (still-untouched-by-this-round) Parents list.
 		for _, plan := range plans {
 			for _, k := range plan.deleteKeys {
 				delete(g.hashcons, k)
@@ -140,7 +123,7 @@ func (g *EGraph) ParallelRebuild(workers int) {
 				c.Parents = plan.newParents
 			}
 		}
-		// Phase B, pass 2: now perform the discovered unions.
+
 		for _, plan := range plans {
 			for _, u := range plan.unions {
 				g.Union(u[0], u[1])

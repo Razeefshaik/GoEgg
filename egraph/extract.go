@@ -39,11 +39,6 @@ func (g *EGraph) Extract(root Id, cost CostFn) (*Term, float64) {
 	return ex.buildTerm(g, r), ex.cost[r]
 }
 
-// analyze computes, for every live e-class, its cheapest node and
-// that node's cost, iterating in synchronous rounds until nothing
-// improves. maxRounds bounds pathological inputs (NumClasses()+1 is
-// always enough: no shortest-path-style relaxation needs more rounds
-// than there are nodes).
 func (g *EGraph) analyze(cost CostFn, maxRounds int) *Extraction {
 	ex := &Extraction{cost: make(map[Id]float64, len(g.classes)), best: make(map[Id]ENode, len(g.classes))}
 	for id := range g.classes {
@@ -66,18 +61,6 @@ func (g *EGraph) analyze(cost CostFn, maxRounds int) *Extraction {
 	return ex
 }
 
-// bestOf finds the cheapest node in class whose children all
-// currently have a finite known cost in ex. Children are canonicalized
-// via g.Find before the cost lookup: a node's stored Children can be
-// stale (pointing at an e-class id that has since been merged away —
-// EGraph never rewrites already-stored e-nodes in place, exactly like
-// egg), and ex.cost is only ever keyed by canonical ids, so skipping
-// this would silently and permanently starve any node whose child
-// happens to have been on the losing side of a later union.
-//
-// bestOf only reads ex.cost (never writes), so given a stable
-// snapshot it is safe to call concurrently — this is exactly what
-// parallel_extract.go does, one call per e-class per round.
 func bestOf(g *EGraph, ex *Extraction, class *EClass, cost CostFn) (float64, ENode, bool) {
 	bestCost := math.Inf(1)
 	var bestNode ENode
@@ -106,7 +89,6 @@ func bestOf(g *EGraph, ex *Extraction, class *EClass, cost CostFn) (float64, ENo
 	return bestCost, bestNode, found
 }
 
-// buildTerm reconstructs the concrete Term for id from the analysis.
 func (ex *Extraction) buildTerm(g *EGraph, id Id) *Term {
 	node := ex.best[id]
 	children := make([]*Term, len(node.Children))

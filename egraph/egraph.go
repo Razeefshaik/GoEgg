@@ -23,9 +23,6 @@ type ENode struct {
 	Children []Id
 }
 
-// key returns a string suitable for use as a hashcons map key. Two
-// ENodes with the same Op and the same Children (in order) produce
-// the same key.
 func (n ENode) key() string {
 	var b strings.Builder
 	b.WriteString(n.Op)
@@ -36,9 +33,6 @@ func (n ENode) key() string {
 	return b.String()
 }
 
-// parentEdge records that Node, as it looked at insertion or last
-// repair time, has the owning e-class as one of its children, and
-// itself lives in e-class Class.
 type parentEdge struct {
 	Node  ENode
 	Class Id
@@ -76,8 +70,6 @@ func NewEGraph() *EGraph {
 // Find returns the current canonical e-class id for id.
 func (g *EGraph) Find(id Id) Id { return g.uf.Find(id) }
 
-// canonicalize returns a copy of n with every child replaced by its
-// current canonical id.
 func (g *EGraph) canonicalize(n ENode) ENode {
 	out := ENode{Op: n.Op, Children: make([]Id, len(n.Children))}
 	for i, c := range n.Children {
@@ -141,8 +133,6 @@ func (g *EGraph) Rebuild() {
 	}
 }
 
-// dedupCanon canonicalizes every id in ids via Find and removes
-// duplicates, preserving first-seen order.
 func (g *EGraph) dedupCanon(ids []Id) []Id {
 	seen := make(map[Id]bool, len(ids))
 	out := make([]Id, 0, len(ids))
@@ -156,40 +146,20 @@ func (g *EGraph) dedupCanon(ids []Id) []Id {
 	return out
 }
 
-// repair restores the hashcons and congruence invariants for the
-// single e-class id, discovering (and scheduling via Union, which
-// re-populates the worklist) any further merges forced by
-// newly-congruent parent e-nodes.
 func (g *EGraph) repair(id Id) {
-	// Re-resolve to the current canonical id: an earlier repair()
-	// call in this same Rebuild batch may have already merged id away
-	// (a congruent-parent union cascading onto id itself). When that
-	// happens id's original Parents were already transferred onto the
-	// class it merged into (EGraph.Union appends them), so there is
-	// nothing left to do here — either that class is elsewhere in
-	// this batch and will pick up the transferred parents when it
-	// runs, or it was already processed with a stale snapshot and
-	// will be repaired again next round, since Union always
-	// re-dirties its result.
+
 	id = g.Find(id)
 	class, ok := g.classes[id]
 	if !ok {
 		return
 	}
 
-	// Step 1: fix the hashcons. Existing entries for this class's
-	// parents may be keyed on now-stale (non-canonical) children;
-	// remove them and reinsert under the canonical key, pointing at
-	// the canonical owning class.
 	for _, p := range class.Parents {
 		delete(g.hashcons, p.Node.key())
 		canon := g.canonicalize(p.Node)
 		g.hashcons[canon.key()] = g.Find(p.Class)
 	}
 
-	// Step 2: re-canonicalize and dedup the parent list. Two parents
-	// that are now congruent (same canonical form) mean their owning
-	// e-classes must also be merged ("upward merging").
 	newParents := make(map[string]parentEdge, len(class.Parents))
 	for _, p := range class.Parents {
 		canon := g.canonicalize(p.Node)
@@ -203,9 +173,7 @@ func (g *EGraph) repair(id Id) {
 	for _, p := range newParents {
 		parents = append(parents, p)
 	}
-	// The Unions above may have merged id's class into something
-	// else's bookkeeping only indirectly (id itself is untouched by
-	// them), but always look it up by canonical id defensively.
+
 	g.classes[g.Find(id)].Parents = parents
 }
 

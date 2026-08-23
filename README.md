@@ -1,5 +1,14 @@
 # pareg — a parallel e-graph / equality-saturation engine in Go
 
+> This is the **library distribution branch** (`release/lib`): source comments
+> are trimmed to exported-symbol doc comments only (what `go doc` /
+> pkg.go.dev show), so the package is easy to skim as a consumer. For the
+> fully-commented version with design rationale inline, see `master`.
+
+```
+go get github.com/Razeefshaik/GoEgg@v0.1.0
+```
+
 `pareg` is an [e-graph](https://en.wikipedia.org/wiki/E-graph) (equality
 graph) library with equality-saturation-style term rewriting, built the way
 [`egg`](https://egraphs-good.github.io/) works in Rust — union-find over
@@ -166,6 +175,8 @@ egraph/
 ## API sketch
 
 ```go
+import "github.com/Razeefshaik/GoEgg/egraph"
+
 g := egraph.NewEGraph()
 root := g.AddTerm(egraph.Node("+",
     egraph.Node("*", egraph.Leaf("x"), egraph.Leaf("1")),
