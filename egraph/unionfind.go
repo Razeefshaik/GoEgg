@@ -32,7 +32,7 @@ func (u *UnionFind) Find(id Id) Id {
 	for u.parent[root] != root {
 		root = u.parent[root]
 	}
-	// Path compression.
+
 	for u.parent[id] != root {
 		next := u.parent[id]
 		u.parent[id] = root

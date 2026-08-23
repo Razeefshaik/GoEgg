@@ -37,10 +37,6 @@ func (s Subst) clone() Subst {
 	return out
 }
 
-// matchPattern finds every way pattern can match e-class id given the
-// current (assumed rebuilt) e-graph, extending the partial
-// substitution sub. It appends each resulting full substitution to
-// out and returns the updated slice.
 func (g *EGraph) matchPattern(pattern Pattern, id Id, sub Subst, out []Subst) []Subst {
 	id = g.Find(id)
 	if pattern.IsVar() {
@@ -65,9 +61,6 @@ func (g *EGraph) matchPattern(pattern Pattern, id Id, sub Subst, out []Subst) []
 	return out
 }
 
-// matchChildren matches a list of child patterns against a list of
-// actual child e-class ids in order, threading and branching the
-// substitution across positions.
 func (g *EGraph) matchChildren(pats []Pattern, ids []Id, sub Subst, out []Subst) []Subst {
 	if len(pats) == 0 {
 		return append(out, sub.clone())
@@ -86,9 +79,6 @@ func (g *EGraph) Match(pattern Pattern, id Id) []Subst {
 	return g.matchPattern(pattern, id, Subst{}, nil)
 }
 
-// instantiate builds (adding e-classes/e-nodes as needed) the term
-// described by pattern under substitution sub, and returns its
-// e-class id. Every variable in pattern must be bound in sub.
 func (g *EGraph) instantiate(pattern Pattern, sub Subst) Id {
 	if pattern.IsVar() {
 		return sub[pattern.Name()]

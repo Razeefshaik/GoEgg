@@ -5,14 +5,6 @@ import (
 	"sync"
 )
 
-// findRO returns the current root of id WITHOUT mutating the
-// union-find (no path compression). It is safe to call concurrently
-// from many goroutines, as long as nothing calls Union or the
-// (compressing) Find concurrently with it. That is exactly the
-// discipline this whole package follows: a rewriting round always
-// searches (read-only) to completion, THEN applies and rebuilds
-// (mutating, single-threaded-with-respect-to-structure); the two
-// phases never overlap on the same e-graph.
 func (u *UnionFind) findRO(id Id) Id {
 	for u.parent[id] != id {
 		id = u.parent[id]
@@ -22,13 +14,6 @@ func (u *UnionFind) findRO(id Id) Id {
 
 func (g *EGraph) findRO(id Id) Id { return g.uf.findRO(id) }
 
-// matchPatternRO and matchChildrenRO mirror matchPattern and
-// matchChildren in match.go exactly, but call findRO instead of Find
-// so that many goroutines can run them concurrently without racing
-// on union-find path compression. They are kept as separate
-// (duplicated) functions rather than parameterizing matchPattern over
-// a "find" callback, so the hot sequential path pays no indirection
-// cost and the concurrency contract stays easy to audit in one place.
 func (g *EGraph) matchPatternRO(pattern Pattern, id Id, sub Subst, out []Subst) []Subst {
 	id = g.findRO(id)
 	if pattern.IsVar() {
@@ -43,7 +28,7 @@ func (g *EGraph) matchPatternRO(pattern Pattern, id Id, sub Subst, out []Subst) 
 		next[name] = id
 		return append(out, next)
 	}
-	class := g.classes[id] // read-only map lookup; safe, no writer during search
+	class := g.classes[id]
 	for _, node := range class.Nodes {
 		if node.Op != pattern.Op || len(node.Children) != len(pattern.Children) {
 			continue
@@ -85,13 +70,6 @@ func (g *EGraph) ParallelSearchAll(rules []*RewriteRule, workers int) []Match {
 		workers = len(ids)
 	}
 
-	// Statically split ids into one contiguous chunk per worker,
-	// rather than handing out one (rule, id) pair at a time through a
-	// channel: for e-graphs where a single match attempt is cheap
-	// (the common case), per-item channel synchronization can cost
-	// more than the match itself, which would erase the whole benefit
-	// of parallelizing. A static split pays goroutine/scheduling
-	// overhead once per worker instead of once per work item.
 	perWorkerResults := make([][]Match, workers)
 	chunk := (len(ids) + workers - 1) / workers
 

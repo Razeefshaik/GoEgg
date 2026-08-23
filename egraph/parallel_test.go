@@ -7,13 +7,6 @@ import (
 	"testing"
 )
 
-// buildStressGraph returns a fresh e-graph containing several
-// moderately deep, overlapping arithmetic expressions (sharing
-// variables, so there is real congruence work to do), and the list
-// of live e-class ids at construction time (all still singleton,
-// unmerged classes). Because id allocation order is deterministic,
-// two calls to buildStressGraph() produce e-graphs whose ids line up
-// 1:1 before any Union runs.
 func buildStressGraph() *EGraph {
 	g := NewEGraph()
 	vars := []string{"a", "b", "c", "d"}
@@ -26,8 +19,7 @@ func buildStressGraph() *EGraph {
 			Node("+", Node("*", Leaf(v), Leaf("1")), Leaf("0")),
 		)
 	}
-	// A few cross terms that reference more than one variable, so
-	// congruence closure has to chase multi-hop parent chains.
+
 	for i := 0; i < len(vars); i++ {
 		for j := 0; j < len(vars); j++ {
 			if i == j {
@@ -97,10 +89,6 @@ func TestParallelSearchAllMatchesSequential(t *testing.T) {
 	}
 }
 
-// samePartition reports whether two e-graphs, built by identical
-// construction sequences (so ids line up 1:1 before any Union), agree
-// on which original ids ended up in the same e-class -- regardless of
-// which particular id each graph picked as the canonical root.
 func samePartition(t *testing.T, a, b *EGraph, n int) {
 	t.Helper()
 	for i := 0; i < n; i++ {
@@ -122,9 +110,6 @@ func TestParallelRebuildMatchesSequential(t *testing.T) {
 		t.Fatalf("test setup broken: graphs allocated a different number of ids (%d vs %d)", n, parG.uf.Len())
 	}
 
-	// Run several rounds of search+apply, but diverge on the rebuild
-	// strategy each round: sequential Rebuild() on one graph,
-	// ParallelRebuild() on the other, otherwise identical inputs.
 	rules := stressRules()
 	for round := 0; round < 6; round++ {
 		sm := seqG.SearchAll(rules)
@@ -137,7 +122,6 @@ func TestParallelRebuildMatchesSequential(t *testing.T) {
 
 	samePartition(t, seqG, parG, n)
 
-	// Extraction should then agree on cost from both graphs.
 	rootSeq := seqG.AddTerm(Leaf("a"))
 	rootPar := parG.AddTerm(Leaf("a"))
 	_, cSeq := seqG.Extract(rootSeq, AstSizeCost)
@@ -164,7 +148,6 @@ func TestParallelSaturateFullEndToEnd(t *testing.T) {
 	g := buildStressGraph()
 	g.ParallelSaturateFull(stressRules(), 8, 4)
 
-	// (a+0) should have fully simplified down to a.
 	root := g.AddTerm(Node("+", Leaf("a"), Leaf("0")))
 	aClass := g.AddTerm(Leaf("a"))
 	if g.Find(root) != g.Find(aClass) {
