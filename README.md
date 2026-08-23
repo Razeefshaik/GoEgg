@@ -7,7 +7,7 @@
 > visualization of the algorithm, see the `showcase` branch.
 
 ```
-go get github.com/Razeefshaik/GoEgg@v0.1.3
+go get github.com/Razeefshaik/GoEgg@v0.1.4
 ```
 
 `GoEgg` is an [e-graph](https://en.wikipedia.org/wiki/E-graph) (equality
@@ -30,7 +30,7 @@ from the start.
 ## Installation
 
 ```
-go get github.com/Razeefshaik/GoEgg@v0.1.3
+go get github.com/Razeefshaik/GoEgg@v0.1.4
 ```
 
 Requires Go 1.24 or later (the module targets `go 1.24.7`). No other

@@ -5,6 +5,12 @@ All notable changes to this module are documented here. Versioning follows
 major version, backwards-compatible additions bump the minor version, and
 fixes bump the patch version.
 
+## v0.1.4 — add license
+
+- Added the MIT LICENSE file (previously missing, so nothing was actually
+  licensed for reuse despite the repo being public). Bumped the README's
+  `go get` version references to match.
+
 ## v0.1.3 — docs, no code change
 
 - Expanded README with an Installation section, a full runnable Quick
