@@ -26,6 +26,84 @@ need to solve this particular problem. So this is offered as a first: not
 just "a parallel e-graph," but an e-graph in Go, period, built parallel
 from the start.
 
+## Installation
+
+```
+go get github.com/Razeefshaik/GoEgg@v0.1.1
+```
+
+Requires Go 1.24 or later (the module targets `go 1.24.7`). No other
+dependencies — the whole library is the standard library plus `sync`.
+
+## Quick start
+
+```go
+import "github.com/Razeefshaik/GoEgg/egraph"
+
+// Build a term: (x * 1) + 0
+g := egraph.NewEGraph()
+root := g.AddTerm(egraph.Node("+",
+    egraph.Node("*", egraph.Leaf("x"), egraph.Leaf("1")),
+    egraph.Leaf("0"),
+))
+g.Rebuild()
+
+// Describe rewrites as LHS -> RHS patterns. "?a" is a pattern
+// variable; anything else must match an e-node's operator exactly.
+rules := []*egraph.RewriteRule{
+    egraph.Rule("mul-one", egraph.PNode("*", egraph.PVar("a"), egraph.PNode("1")), egraph.PVar("a")),
+    egraph.Rule("add-zero-r", egraph.PNode("+", egraph.PVar("a"), egraph.PNode("0")), egraph.PVar("a")),
+}
+
+// Run search -> apply -> rebuild to a fixed point, using every phase's
+// parallel implementation (0 workers = runtime.GOMAXPROCS(0)).
+g.ParallelSaturateFull(rules, 10, 0)
+
+// Pull out the cheapest term equivalent to root under a cost function.
+term, cost := g.ParallelExtract(root, egraph.AstSizeCost, 0)
+fmt.Println(term, cost) // x  1
+```
+
+That's the whole workflow: build a term, describe your rewrites as
+patterns, saturate, extract. Everything below is detail on the pieces
+that workflow is made of.
+
+## What you can do with it
+
+Every capability has a sequential entry point (the correctness
+baseline) and, where the phase parallelizes, a `Parallel*` twin with
+the identical contract plus a `workers int` argument (`0` = all
+cores). Mix and match freely — e.g. `ParallelSearchAll` followed by
+the plain sequential `Rebuild` is fine.
+
+| You want to... | Sequential | Parallel |
+|---|---|---|
+| Build/insert a term or e-node | `AddTerm`, `Add` | — (read-mostly, not a hot path) |
+| Merge two e-classes | `Union` | — |
+| Restore hashcons + congruence after unions | `Rebuild` | `ParallelRebuild` |
+| Find every rule match in the graph | `SearchAll` | `ParallelSearchAll` |
+| Apply a batch of matches | `ApplyAll` | — (mutates the graph, kept single-threaded) |
+| Run search→apply→rebuild to a fixed point | `Saturate` | `ParallelSaturate` (parallel search only), `ParallelSaturateFull` (parallel search *and* rebuild) |
+| Extract the cheapest equivalent term | `Extract` | `ParallelExtract` |
+
+A few things worth knowing before you reach for the parallel calls:
+
+- **Never call a `Parallel*` read (search/extract) concurrently with
+  anything that mutates the graph** (`Add`, `Union`, `Rebuild`,
+  `ApplyAll`) — the read-only parallel paths use a non-compressing
+  `findRO` specifically so they don't race with a compressing `Find`,
+  which only holds if searches run to completion before any mutation
+  starts. `ParallelSaturate`/`ParallelSaturateFull` already sequence
+  this correctly for you; only worry about it if you're calling the
+  phases individually.
+- **Plug in your own cost model** by implementing `CostFn` — a
+  function from `(ENode, childCosts []float64) float64`. Only
+  `AstSizeCost` (every node costs 1) ships out of the box.
+- **Rules are just LHS/RHS `Pattern`s.** Build them with `PNode`,
+  `PVar`, and `Rule`; a pattern operator starting with `?` is a
+  variable, anything else must match an e-node's operator and arity
+  exactly.
+
 ## Why Go, and why this shape of parallelism
 
 Go's goroutines are a CPU-multicore concurrency model, not a GPU one —
@@ -170,29 +248,6 @@ egraph/
   egraph_test.go          sequential correctness tests
   parallel_test.go        parallel-vs-sequential agreement tests (run with -race)
   bench_test.go           benchmarks
-```
-
-## API sketch
-
-```go
-import "github.com/Razeefshaik/GoEgg/egraph"
-
-g := egraph.NewEGraph()
-root := g.AddTerm(egraph.Node("+",
-    egraph.Node("*", egraph.Leaf("x"), egraph.Leaf("1")),
-    egraph.Leaf("0"),
-))
-g.Rebuild()
-
-rules := []*egraph.RewriteRule{
-    egraph.Rule("mul-one", egraph.PNode("*", egraph.PVar("a"), egraph.PNode("1")), egraph.PVar("a")),
-    egraph.Rule("add-zero-r", egraph.PNode("+", egraph.PVar("a"), egraph.PNode("0")), egraph.PVar("a")),
-}
-
-g.ParallelSaturateFull(rules, 10, 0) // 0 workers = runtime.GOMAXPROCS(0)
-
-term, cost := g.ParallelExtract(root, egraph.AstSizeCost, 0)
-fmt.Println(term, cost) // x  1
 ```
 
 ## What this is not (yet)
