@@ -1,0 +1,764 @@
+<title>Pareg Playground</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg: #f3f5f6;
+    --surface: #ffffff;
+    --surface-2: #eaeef0;
+    --surface-3: #dfe4e7;
+    --ink: #1b2430;
+    --ink-soft: #4a5566;
+    --ink-faint: #7c8894;
+    --border: #d7dde1;
+    --accent: #0f7a6c;
+    --accent-soft: #d9efe9;
+    --accent-ink: #0a5349;
+    --rust: #b8552a;
+    --rust-soft: #f4e2d6;
+    --good: #1f8a5b;
+    --shadow: 0 1px 2px rgba(27,36,48,0.06), 0 6px 20px rgba(27,36,48,0.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg: #10151b; --surface: #171e26; --surface-2: #1e2731; --surface-3: #263340;
+      --ink: #e7ecf0; --ink-soft: #9fb0bd; --ink-faint: #6b7a87;
+      --border: #2b3844; --accent: #3fcbb2; --accent-soft: #16332e; --accent-ink: #7fe0cc;
+      --rust: #e08a55; --rust-soft: #3a2418; --good: #4fd190;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg: #10151b; --surface: #171e26; --surface-2: #1e2731; --surface-3: #263340;
+    --ink: #e7ecf0; --ink-soft: #9fb0bd; --ink-faint: #6b7a87;
+    --border: #2b3844; --accent: #3fcbb2; --accent-soft: #16332e; --accent-ink: #7fe0cc;
+    --rust: #e08a55; --rust-soft: #3a2418; --good: #4fd190;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  }
+  *{ box-sizing: border-box; }
+  body{
+    background: var(--bg); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    margin: 0; padding: 0 0 4rem;
+  }
+  code, .mono{ font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  a{ color: var(--accent-ink); }
+  button:focus-visible, input:focus-visible, summary:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  header{
+    max-width: 1320px; margin: 0 auto; padding: 2.4rem 2rem 1.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .eyebrow{
+    display: inline-flex; align-items: center; gap: .5rem; font-size: .76rem; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink);
+    background: var(--accent-soft); padding: .3rem .7rem; border-radius: 4px;
+  }
+  h1{ font-size: clamp(1.7rem, 2.6vw, 2.2rem); margin: .8rem 0 .5rem; letter-spacing: -0.01em; text-wrap: balance; }
+  .dek{ color: var(--ink-soft); max-width: 74ch; margin: 0; font-size: 1.02rem; line-height: 1.55; }
+  .dek code{ font-size: .92em; }
+
+  .app{
+    max-width: 1320px; margin: 1.8rem auto 0; padding: 0 2rem;
+    display: grid; grid-template-columns: 268px minmax(0,1fr) 300px; gap: 1.25rem;
+    align-items: start;
+  }
+  @media (max-width: 1150px){
+    .app{ grid-template-columns: 1fr; }
+    .panel{ order: initial; }
+  }
+
+  .panel{
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: var(--shadow); padding: 1.1rem 1.15rem;
+  }
+  .panel + .panel{ margin-top: 1.1rem; }
+  .panel h2{
+    font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--ink-soft); margin: 0 0 .8rem;
+  }
+
+  fieldset{ border: none; margin: 0 0 1.1rem; padding: 0; }
+  legend{ font-size: .78rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: .5rem; padding: 0; }
+  select{
+    width: 100%; font-family: inherit; font-size: .92rem; color: var(--ink);
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 7px;
+    padding: .5rem .6rem;
+  }
+  .rule-row{ display: flex; align-items: flex-start; gap: .55rem; padding: .3rem 0; font-size: .87rem; }
+  .rule-row input{ margin-top: .2rem; accent-color: var(--accent); }
+  .rule-row label{ cursor: pointer; }
+  .rule-row .eq{ display:block; font-family: "IBM Plex Mono", monospace; font-size: .84rem; color: var(--ink); }
+  .rule-row .name{ display:block; font-size: .74rem; color: var(--ink-faint); margin-top: .1rem; }
+
+  .btn-row{ display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .2rem; }
+  button{
+    font-family: inherit; font-size: .87rem; font-weight: 600; cursor: pointer;
+    border-radius: 7px; padding: .55rem .85rem; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--ink); transition: background .12s, border-color .12s;
+  }
+  button:hover{ background: var(--surface-3); }
+  button.primary{ background: var(--accent); border-color: var(--accent); color: #ffffff; }
+  button.primary:hover{ filter: brightness(1.06); }
+  button.ghost{ background: transparent; }
+  button:disabled{ opacity: .45; cursor: not-allowed; }
+  button:disabled:hover{ background: var(--surface-2); }
+
+  .speed-row{ display:flex; align-items:center; gap:.6rem; margin-top: .9rem; font-size: .82rem; color: var(--ink-soft); }
+  .speed-row input[type=range]{ flex: 1; accent-color: var(--accent); }
+
+  /* center canvas */
+  .canvas-wrap{
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: var(--shadow); overflow: auto; max-height: 640px; min-height: 320px;
+    padding: .5rem;
+  }
+  .canvas-wrap svg{ display: block; }
+  .canvas-toolbar{ display:flex; align-items:center; justify-content: space-between; margin-bottom: .7rem; flex-wrap: wrap; gap: .5rem; }
+  .expr-display{
+    font-family: "IBM Plex Mono", monospace; font-size: .95rem; color: var(--ink);
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 7px;
+    padding: .5rem .75rem; overflow-x: auto; white-space: nowrap; flex: 1; min-width: 220px;
+  }
+  .pill{
+    display: inline-flex; align-items: center; gap: .4rem; font-size: .78rem; font-weight: 600;
+    padding: .3rem .65rem; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft);
+    border: 1px solid var(--border);
+  }
+  .pill .dot{ width: 7px; height: 7px; border-radius: 50%; background: var(--ink-faint); }
+  .pill.live .dot{ background: var(--good); }
+  .pill.done{ background: var(--accent-soft); color: var(--accent-ink); border-color: transparent; }
+  .pill.done .dot{ background: var(--accent-ink); }
+
+  /* stats */
+  .stat-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+  .stat{ background: var(--surface-2); border-radius: 8px; padding: .6rem .7rem; }
+  .stat .k{ font-size: .68rem; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-faint); }
+  .stat .v{ font-family: "IBM Plex Mono", monospace; font-size: 1.15rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .extract-result{ margin-top: .9rem; font-size: .88rem; }
+  .extract-result .term{
+    font-family: "IBM Plex Mono", monospace; background: var(--accent-soft); color: var(--accent-ink);
+    border-radius: 7px; padding: .55rem .7rem; margin-top: .4rem; overflow-x: auto; white-space: nowrap;
+  }
+  .extract-result .cost{ color: var(--ink-soft); margin-top: .35rem; }
+  .extract-empty{ color: var(--ink-faint); font-size: .85rem; }
+
+  .log{
+    list-style: none; margin: 0; padding: 0; max-height: 220px; overflow-y: auto;
+    font-size: .82rem; display: flex; flex-direction: column-reverse;
+  }
+  .log li{ padding: .45rem 0; border-top: 1px solid var(--border); color: var(--ink-soft); }
+  .log li:last-child{ border-top: none; }
+  .log li .r{ font-family: "IBM Plex Mono", monospace; color: var(--accent-ink); font-weight: 600; margin-right: .4rem; }
+
+  .legend{ display:flex; gap: 1rem; flex-wrap: wrap; font-size: .78rem; color: var(--ink-soft); margin-top: .8rem; }
+  .legend span{ display:inline-flex; align-items:center; gap:.4rem; }
+  .swatch{ width: 14px; height: 14px; border-radius: 3px; display:inline-block; border: 1.5px solid currentColor; }
+  .swatch.node{ background: var(--surface-2); border-color: var(--border); }
+  .swatch.edge{ background: var(--ink-faint); border: none; height: 2px; width: 16px; border-radius: 1px; }
+  .swatch.chosen{ background: var(--accent); border: none; height: 2px; width: 16px; border-radius: 1px; }
+
+  footer{
+    max-width: 1320px; margin: 2.4rem auto 0; padding: 1.4rem 2rem 0; border-top: 1px solid var(--border);
+    font-size: .82rem; color: var(--ink-faint);
+  }
+  @media (prefers-reduced-motion: reduce){ *{ transition-duration: .01ms !important; } }
+</style>
+
+<header>
+  <span class="eyebrow">Interactive &middot; showcase build</span>
+  <h1>Watch equality saturation run</h1>
+  <p class="dek">This page runs a JavaScript port of <code>pareg</code>'s sequential algorithm &mdash; the same union-find, hashcons, and worklist-rebuild design described in the project's README &mdash; directly in your browser, so you can step through matching, applying, and rebuilding one round at a time and watch the e-graph change shape. It's a faithful re-implementation for visualization, not the compiled Go engine; see the <code>master</code> branch for that.</p>
+</header>
+
+<div class="app">
+  <div class="left-col">
+    <div class="panel">
+      <h2>Starting expression</h2>
+      <fieldset>
+        <select id="preset"></select>
+      </fieldset>
+      <h2 style="margin-top:1.2rem;">Rewrite rules</h2>
+      <div id="rules"></div>
+    </div>
+  </div>
+
+  <div class="center-col">
+    <div class="panel canvas-toolbar" style="box-shadow:none; padding: 0; border: none; background: transparent; margin-bottom: .8rem;">
+      <div class="expr-display" id="exprDisplay"></div>
+      <span class="pill" id="statusPill"><span class="dot"></span><span id="statusText">not started</span></span>
+    </div>
+    <div class="canvas-wrap"><svg id="graphSvg" role="img" aria-label="Live e-graph state"></svg></div>
+    <div class="legend">
+      <span><i class="swatch node"></i> e-class (nodes inside)</span>
+      <span><i class="swatch edge"></i> child reference</span>
+      <span><i class="swatch chosen"></i> path chosen by extraction</span>
+    </div>
+    <div class="btn-row" style="margin-top: 1rem;">
+      <button class="primary" id="btnStep">Step one round</button>
+      <button id="btnRun">Run to saturation</button>
+      <button id="btnStop" disabled>Stop</button>
+      <button class="ghost" id="btnExtract">Extract cheapest</button>
+      <button class="ghost" id="btnReset">Reset</button>
+    </div>
+    <div class="speed-row">
+      <label for="speed">Auto-run speed</label>
+      <input type="range" id="speed" min="120" max="1400" value="500" step="20">
+      <span id="speedLabel" class="mono">500ms</span>
+    </div>
+  </div>
+
+  <div class="right-col">
+    <div class="panel">
+      <h2>State</h2>
+      <div class="stat-grid">
+        <div class="stat"><div class="k">Round</div><div class="v" id="statRound">0</div></div>
+        <div class="stat"><div class="k">E-classes</div><div class="v" id="statClasses">0</div></div>
+        <div class="stat"><div class="k">E-nodes</div><div class="v" id="statNodes">0</div></div>
+        <div class="stat"><div class="k">Unions total</div><div class="v" id="statUnions">0</div></div>
+      </div>
+      <div class="extract-result" id="extractPanel">
+        <div class="extract-empty">Run "Extract cheapest" to find and highlight the lowest-cost equivalent term.</div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Round log</h2>
+      <ul class="log" id="logList"></ul>
+    </div>
+  </div>
+</div>
+
+<footer>Rules and cost model mirror <code>egraph/match.go</code> and <code>egraph/extract.go</code> (<code>AstSizeCost</code>: every node costs 1). Sequential path only &mdash; this is about the algorithm's behavior, not its parallel speedup.</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- e-graph engine (mirrors egraph/*.go) ---------- */
+  let parent, rank, classes, hashcons, worklist, nextId;
+
+  function resetEngine(){
+    parent = []; rank = []; classes = new Map(); hashcons = new Map(); worklist = []; nextId = 0;
+  }
+  function makeSet(){ const id = parent.length; parent.push(id); rank.push(0); return id; }
+  function find(id){
+    let root = id;
+    while(parent[root] !== root) root = parent[root];
+    while(parent[id] !== root){ const next = parent[id]; parent[id] = root; id = next; }
+    return root;
+  }
+  function ufUnion(a,b){
+    let ra = find(a), rb = find(b);
+    if(ra===rb) return ra;
+    if(rank[ra] < rank[rb]){ const t=ra; ra=rb; rb=t; }
+    parent[rb] = ra;
+    if(rank[ra]===rank[rb]) rank[ra]++;
+    return ra;
+  }
+  function nodeKey(n){ return n.op + " " + n.children.join(" "); }
+  function canonicalize(n){ return {op:n.op, children:n.children.map(find)}; }
+
+  let totalUnions = 0;
+
+  function addNode(n){
+    n = canonicalize(n);
+    const key = nodeKey(n);
+    if(hashcons.has(key)) return find(hashcons.get(key));
+    const id = makeSet();
+    classes.set(id, {id, nodes:[n], parents:[]});
+    hashcons.set(key, id);
+    for(const c of n.children){
+      const cc = classes.get(find(c));
+      cc.parents.push({node:n, owner:id});
+    }
+    return id;
+  }
+
+  function graphUnion(a,b){
+    a = find(a); b = find(b);
+    if(a===b) return false;
+    const newRoot = ufUnion(a,b);
+    const loser = newRoot===a ? b : a;
+    const winner = classes.get(newRoot);
+    const lost = classes.get(loser);
+    winner.nodes.push(...lost.nodes);
+    winner.parents.push(...lost.parents);
+    classes.delete(loser);
+    worklist.push(newRoot);
+    totalUnions++;
+    return true;
+  }
+
+  function dedupCanon(ids){
+    const seen = new Set(); const out = [];
+    for(const id of ids){ const c = find(id); if(!seen.has(c)){ seen.add(c); out.push(c); } }
+    return out;
+  }
+
+  function repair(id){
+    id = find(id);
+    const cls = classes.get(id);
+    if(!cls) return;
+    for(const p of cls.parents){
+      hashcons.delete(nodeKey(p.node));
+      const canon = canonicalize(p.node);
+      hashcons.set(nodeKey(canon), find(p.owner));
+    }
+    const newParents = new Map();
+    for(const p of cls.parents){
+      const canon = canonicalize(p.node);
+      const key = nodeKey(canon);
+      if(newParents.has(key)){
+        graphUnion(newParents.get(key).owner, p.owner);
+      }
+      newParents.set(key, {node:canon, owner:find(p.owner)});
+    }
+    const c2 = classes.get(find(id));
+    if(c2) c2.parents = [...newParents.values()];
+  }
+
+  function rebuild(){
+    while(worklist.length){
+      const todo = dedupCanon(worklist);
+      worklist = [];
+      for(const id of todo) repair(id);
+    }
+  }
+
+  function isVar(op){ return op.charAt(0) === "?"; }
+
+  function matchPattern(pat, id, sub, out){
+    id = find(id);
+    if(isVar(pat.op)){
+      const name = pat.op.slice(1);
+      if(sub.has(name)){
+        if(sub.get(name) !== id) return out;
+        out.push(new Map(sub));
+        return out;
+      }
+      const next = new Map(sub); next.set(name, id);
+      out.push(next);
+      return out;
+    }
+    const cls = classes.get(id);
+    const pc = pat.children || [];
+    for(const node of cls.nodes){
+      if(node.op !== pat.op || node.children.length !== pc.length) continue;
+      out = matchChildren(pc, node.children, sub, out);
+    }
+    return out;
+  }
+  function matchChildren(pats, ids, sub, out){
+    if(pats.length === 0){ out.push(new Map(sub)); return out; }
+    const head = matchPattern(pats[0], ids[0], sub, []);
+    for(const s of head) out = matchChildren(pats.slice(1), ids.slice(1), s, out);
+    return out;
+  }
+  function searchAll(rules){
+    const matches = [];
+    for(const r of rules){
+      for(const id of [...classes.keys()]){
+        const subs = matchPattern(r.lhs, id, new Map(), []);
+        for(const s of subs) matches.push({rule:r, cls:id, sub:s});
+      }
+    }
+    return matches;
+  }
+  function instantiate(pat, sub){
+    if(isVar(pat.op)) return sub.get(pat.op.slice(1));
+    const children = (pat.children||[]).map(c => instantiate(c, sub));
+    return addNode({op: pat.op, children});
+  }
+  function applyAll(matches){
+    let changed = 0;
+    for(const m of matches){
+      const rhs = instantiate(m.rule.rhs, m.sub);
+      if(graphUnion(m.cls, rhs)) changed++;
+    }
+    return changed;
+  }
+
+  function extract(root){
+    const cost = new Map(), best = new Map();
+    for(const id of classes.keys()) cost.set(id, Infinity);
+    const maxRounds = classes.size + 1;
+    for(let round = 0; round < maxRounds; round++){
+      let changed = false;
+      for(const [id, cls] of classes){
+        let bestCost = Infinity, bestNode = null;
+        for(const node of cls.nodes){
+          let childCosts = [], ready = true;
+          for(const c of node.children){
+            const cc = cost.get(find(c));
+            if(cc === undefined || !isFinite(cc)){ ready = false; break; }
+            childCosts.push(cc);
+          }
+          if(!ready) continue;
+          const c = 1 + childCosts.reduce((a,b)=>a+b, 0);
+          if(c < bestCost){ bestCost = c; bestNode = node; }
+        }
+        if(bestNode && bestCost < cost.get(id)){ cost.set(id, bestCost); best.set(id, bestNode); changed = true; }
+      }
+      if(!changed) break;
+    }
+    const r = find(root);
+    function build(id){
+      id = find(id);
+      const node = best.get(id);
+      if(!node) return null;
+      return {op: node.op, children: node.children.map(build)};
+    }
+    return {term: build(r), cost: cost.get(r), best, root: r};
+  }
+
+  function termToString(t){
+    if(!t) return "?";
+    if(!t.children || t.children.length === 0) return t.op;
+    return "(" + t.op + " " + t.children.map(termToString).join(" ") + ")";
+  }
+  function addTerm(t){
+    const children = (t.children||[]).map(addTerm);
+    return addNode({op: t.op, children});
+  }
+
+  /* ---------- presets & rules ---------- */
+  const L = (op) => ({op});
+  const N = (op, ...children) => ({op, children});
+  const V = (name) => ({op: "?"+name});
+  const P = (op, ...children) => ({op, children});
+
+  const PRESETS = [
+    { id:"mulone-addzero", label:"(x × 1) + 0", build:() => N("+", N("*", L("x"), L("1")), L("0")),
+      defaultRules:["mul-one-r","add-zero-r"] },
+    { id:"swap-simplify", label:"(0 + x) × 1", build:() => N("*", N("+", L("0"), L("x")), L("1")),
+      defaultRules:["add-zero-l","mul-one-r"] },
+    { id:"assoc-explosion", label:"(a + b) + c — no simplifier", build:() => N("+", N("+", L("a"), L("b")), L("c")),
+      defaultRules:["comm-add","assoc-add"] },
+    { id:"mul-zero", label:"(x + y) × 0", build:() => N("*", N("+", L("x"), L("y")), L("0")),
+      defaultRules:["mul-zero-r"] },
+  ];
+
+  const RULES = [
+    { id:"mul-one-r",  name:"mul-one-r",  lhs:P("*", V("a"), P("1")), rhs:V("a"), eq:"(× ?a 1) → ?a" },
+    { id:"mul-one-l",  name:"mul-one-l",  lhs:P("*", P("1"), V("a")), rhs:V("a"), eq:"(× 1 ?a) → ?a" },
+    { id:"add-zero-r", name:"add-zero-r", lhs:P("+", V("a"), P("0")), rhs:V("a"), eq:"(+ ?a 0) → ?a" },
+    { id:"add-zero-l", name:"add-zero-l", lhs:P("+", P("0"), V("a")), rhs:V("a"), eq:"(+ 0 ?a) → ?a" },
+    { id:"mul-zero-r", name:"mul-zero-r", lhs:P("*", V("a"), P("0")), rhs:P("0"), eq:"(× ?a 0) → 0" },
+    { id:"mul-zero-l", name:"mul-zero-l", lhs:P("*", P("0"), V("a")), rhs:P("0"), eq:"(× 0 ?a) → 0" },
+    { id:"comm-add",   name:"comm-add",   lhs:P("+", V("a"), V("b")), rhs:P("+", V("b"), V("a")), eq:"(+ ?a ?b) → (+ ?b ?a)" },
+    { id:"comm-mul",   name:"comm-mul",   lhs:P("*", V("a"), V("b")), rhs:P("*", V("b"), V("a")), eq:"(× ?a ?b) → (× ?b ?a)" },
+    { id:"assoc-add",  name:"assoc-add",  lhs:P("+", P("+", V("a"), V("b")), V("c")), rhs:P("+", V("a"), P("+", V("b"), V("c"))), eq:"((?a+?b)+?c) → (?a+(?b+?c))" },
+  ];
+
+  /* ---------- app state ---------- */
+  let rootId = null, round = 0, running = false, saturated = false, timer = null, lastExtract = null;
+
+  const el = (id) => document.getElementById(id);
+  const presetSel = el("preset"), rulesDiv = el("rules"), logList = el("logList");
+
+  PRESETS.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id; opt.textContent = p.label;
+    presetSel.appendChild(opt);
+  });
+
+  RULES.forEach(r => {
+    const row = document.createElement("div");
+    row.className = "rule-row";
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.id = "rule-" + r.id; cb.dataset.ruleId = r.id;
+    const label = document.createElement("label");
+    label.htmlFor = cb.id;
+    label.innerHTML = '<span class="eq">'+r.eq+'</span><span class="name">'+r.name+'</span>';
+    row.appendChild(cb); row.appendChild(label);
+    rulesDiv.appendChild(row);
+  });
+
+  function activeRules(){
+    return RULES.filter(r => el("rule-"+r.id).checked);
+  }
+
+  function applyPresetDefaults(preset){
+    RULES.forEach(r => { el("rule-"+r.id).checked = preset.defaultRules.includes(r.id); });
+  }
+
+  function loadPreset(){
+    const preset = PRESETS.find(p => p.id === presetSel.value) || PRESETS[0];
+    applyPresetDefaults(preset);
+    resetEngine();
+    totalUnions = 0;
+    rootId = addTerm(preset.build());
+    rebuild();
+    round = 0; saturated = false; running = false; lastExtract = null;
+    stopAutorun();
+    logList.innerHTML = "";
+    logLine("Loaded <b>" + termToString(preset.build()) + "</b>.");
+    el("exprDisplay").textContent = termToString(preset.build());
+    updateStatus();
+    renderExtract(null);
+    render();
+  }
+
+  function logLine(html){
+    const li = document.createElement("li");
+    li.innerHTML = '<span class="r">r' + round + '</span>' + html;
+    logList.appendChild(li);
+  }
+
+  function updateStatus(){
+    el("statRound").textContent = round;
+    el("statClasses").textContent = classes.size;
+    let nodeCount = 0; for(const c of classes.values()) nodeCount += c.nodes.length;
+    el("statNodes").textContent = nodeCount;
+    el("statUnions").textContent = totalUnions;
+
+    const pill = el("statusPill"), text = el("statusText");
+    pill.classList.remove("live","done");
+    if(round === 0){ text.textContent = "not started"; }
+    else if(saturated){ pill.classList.add("done"); text.textContent = "saturated at round " + round; }
+    else { pill.classList.add("live"); text.textContent = "round " + round + " — more to do"; }
+
+    el("btnStep").disabled = saturated;
+    el("btnRun").disabled = saturated || running;
+    el("btnStop").disabled = !running;
+  }
+
+  function stepOnce(){
+    if(saturated) return false;
+    const rules = activeRules();
+    const matches = searchAll(rules);
+    if(matches.length === 0){
+      saturated = true;
+      logLine("No matches found — fully saturated.");
+      updateStatus();
+      return false;
+    }
+    const changed = applyAll(matches);
+    rebuild();
+    round++;
+    logLine(matches.length + " match" + (matches.length===1?"":"es") + " found, " + changed + " union" + (changed===1?"":"s") + " applied → " + classes.size + " e-classes.");
+    if(changed === 0){ saturated = true; logLine("No further change — fixed point reached."); }
+    lastExtract = null;
+    renderExtract(null);
+    updateStatus();
+    render();
+    return !saturated;
+  }
+
+  function stopAutorun(){
+    running = false;
+    if(timer){ clearTimeout(timer); timer = null; }
+    updateStatus();
+  }
+
+  function runAutorun(){
+    if(activeRules().length === 0){ logLine("No rules selected."); return; }
+    running = true;
+    updateStatus();
+    const tick = () => {
+      if(!running) return;
+      const more = stepOnce();
+      if(!more){ stopAutorun(); return; }
+      timer = setTimeout(tick, Number(el("speed").value));
+    };
+    tick();
+  }
+
+  function doExtract(){
+    if(classes.size === 0) return;
+    lastExtract = extract(rootId);
+    renderExtract(lastExtract);
+    render();
+  }
+
+  function renderExtract(ex){
+    const panel = el("extractPanel");
+    if(!ex || !ex.term){
+      panel.innerHTML = '<div class="extract-empty">Run "Extract cheapest" to find and highlight the lowest-cost equivalent term.</div>';
+      return;
+    }
+    panel.innerHTML =
+      '<div class="k" style="font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);">Cheapest equivalent term</div>' +
+      '<div class="term">' + termToString(ex.term) + '</div>' +
+      '<div class="cost">cost = ' + ex.cost + ' (AST-size: 1 per node)</div>';
+  }
+
+  /* ---------- rendering ---------- */
+  const SVGNS = "http://www.w3.org/2000/svg";
+  function svgEl(tag, attrs){
+    const e = document.createElementNS(SVGNS, tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  function computeLayers(){
+    const layerOf = new Map();
+    if(!classes.has(find(rootId))) return layerOf;
+    const start = find(rootId);
+    layerOf.set(start, 0);
+    const queue = [start];
+    while(queue.length){
+      const id = queue.shift();
+      const layer = layerOf.get(id);
+      const cls = classes.get(id);
+      if(!cls) continue;
+      for(const node of cls.nodes){
+        for(const c of node.children){
+          const cid = find(c);
+          if(!layerOf.has(cid)){ layerOf.set(cid, layer+1); queue.push(cid); }
+        }
+      }
+    }
+    // anything not reached (shouldn't normally happen) gets appended at the end
+    let maxLayer = 0;
+    for(const v of layerOf.values()) maxLayer = Math.max(maxLayer, v);
+    for(const id of classes.keys()) if(!layerOf.has(id)) layerOf.set(id, maxLayer+1);
+    return layerOf;
+  }
+
+  function render(){
+    const svg = el("graphSvg");
+    svg.innerHTML = "";
+    if(classes.size === 0) return;
+
+    const layerOf = computeLayers();
+    const byLayer = new Map();
+    for(const [id, layer] of layerOf){ if(!byLayer.has(layer)) byLayer.set(layer, []); byLayer.get(layer).push(id); }
+    const layers = [...byLayer.keys()].sort((a,b)=>a-b);
+
+    const rowH = 26, padY = 10, padX = 12, cardMinW = 118, gapX = 34, gapY = 56, chipGap = 6;
+    const positions = new Map(); // id -> {x,y,w,h}
+    const layerHeights = [];
+
+    // pass 1: card sizes, and per-layer stacking width
+    let canvasW = 0;
+    layers.forEach((layer) => {
+      const ids = byLayer.get(layer);
+      let x = 0, maxH = 0;
+      ids.forEach((id) => {
+        const cls = classes.get(id);
+        const w = Math.max(cardMinW, 26 + Math.max(...cls.nodes.map(n => (n.op.length*8) + (n.children.length*20) + 18)));
+        const h = padY*2 + cls.nodes.length*rowH;
+        positions.set(id, {x, y:0, w, h, layer});
+        x += w + gapX;
+        maxH = Math.max(maxH, h);
+      });
+      canvasW = Math.max(canvasW, x - gapX);
+      layerHeights[layer] = maxH;
+    });
+
+    // center each layer horizontally
+    let cumY = 20;
+    layers.forEach((layer) => {
+      const ids = byLayer.get(layer);
+      let rowW = 0;
+      ids.forEach(id => rowW += positions.get(id).w + gapX);
+      rowW -= gapX;
+      let x = (canvasW - rowW)/2;
+      ids.forEach(id => {
+        const p = positions.get(id);
+        p.x = x; p.y = cumY;
+        x += p.w + gapX;
+      });
+      cumY += layerHeights[layer] + gapY;
+    });
+
+    const canvasH = cumY;
+    svg.setAttribute("viewBox", "0 0 " + (canvasW+40) + " " + (canvasH+20));
+    svg.setAttribute("width", Math.max(canvasW+40, 560));
+    svg.setAttribute("aria-label", "Layered diagram of " + classes.size + " e-classes, root at top");
+
+    const defs = svgEl("defs", {});
+    defs.innerHTML =
+      '<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">' +
+      '<path d="M0,0 L10,5 L0,10 z" fill="currentColor"></path></marker>' +
+      '<marker id="arrowChosen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">' +
+      '<path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"></path></marker>';
+    svg.appendChild(defs);
+
+    const g = svgEl("g", {transform:"translate(20,0)"});
+    svg.appendChild(g);
+
+    const chosenBest = lastExtract ? lastExtract.best : null;
+
+    // edges first (under nodes)
+    const slotPositions = new Map(); // nodeIdx key -> [{x,y}...]
+    for(const [id, cls] of classes){
+      const p = positions.get(id);
+      cls.nodes.forEach((node, ni) => {
+        const rowY = p.y + padY + ni*rowH + rowH/2;
+        const isChosen = chosenBest && chosenBest.get(id) === node;
+        node.children.forEach((cid, ci) => {
+          const target = positions.get(find(cid));
+          if(!target) return;
+          const slotX = p.x + 14 + ci*16;
+          const startX = slotX, startY = rowY + 6;
+          const endX = target.x + target.w/2, endY = target.y;
+          const midY = (startY + endY)/2;
+          const path = svgEl("path", {
+            d: "M"+startX+","+startY+" C "+startX+","+midY+" "+endX+","+midY+" "+endX+","+endY,
+            fill: "none",
+            stroke: isChosen ? "var(--accent)" : "currentColor",
+            "stroke-width": isChosen ? 2.4 : 1.2,
+            opacity: chosenBest ? (isChosen ? 1 : 0.22) : 0.55,
+            "marker-end": isChosen ? "url(#arrowChosen)" : "url(#arrow)"
+          });
+          g.appendChild(path);
+        });
+      });
+    }
+
+    // class cards + node chips
+    for(const [id, cls] of classes){
+      const p = positions.get(id);
+      const isRoot = id === find(rootId);
+      const card = svgEl("rect", {
+        x:p.x, y:p.y, width:p.w, height:p.h, rx:9,
+        fill:"var(--surface-2)", stroke: isRoot ? "var(--accent)" : "var(--border)",
+        "stroke-width": isRoot ? 2 : 1.2
+      });
+      g.appendChild(card);
+
+      const idLabel = svgEl("text", {
+        x:p.x+8, y:p.y-4, "font-size":10, "font-family":"IBM Plex Mono, monospace",
+        fill:"var(--ink-faint)"
+      });
+      idLabel.textContent = "e" + id + (isRoot ? " (root)" : "");
+      g.appendChild(idLabel);
+
+      cls.nodes.forEach((node, ni) => {
+        const rowY = p.y + padY + ni*rowH;
+        const isChosen = chosenBest && chosenBest.get(id) === node;
+        if(isChosen){
+          const hl = svgEl("rect", {x:p.x+3, y:rowY-3, width:p.w-6, height:rowH-4, rx:5, fill:"var(--accent-soft)"});
+          g.appendChild(hl);
+        }
+        const label = svgEl("text", {
+          x:p.x+10, y: rowY + rowH/2 + 4, "font-size":12.5, "font-family":"IBM Plex Mono, monospace",
+          fill: isChosen ? "var(--accent-ink)" : "var(--ink)"
+        });
+        label.textContent = node.children.length === 0 ? node.op : node.op + " ·".repeat(node.children.length);
+        g.appendChild(label);
+
+        node.children.forEach((cid, ci) => {
+          const slotX = p.x + 14 + ci*16;
+          const dot = svgEl("circle", {cx:slotX, cy: rowY+rowH-6, r:2.6, fill: isChosen ? "var(--accent)" : "var(--ink-faint)"});
+          g.appendChild(dot);
+        });
+      });
+    }
+  }
+
+  /* ---------- wiring ---------- */
+  presetSel.addEventListener("change", loadPreset);
+  el("btnStep").addEventListener("click", () => { if(running) stopAutorun(); stepOnce(); });
+  el("btnRun").addEventListener("click", runAutorun);
+  el("btnStop").addEventListener("click", stopAutorun);
+  el("btnExtract").addEventListener("click", doExtract);
+  el("btnReset").addEventListener("click", loadPreset);
+  el("speed").addEventListener("input", () => { el("speedLabel").textContent = el("speed").value + "ms"; });
+  rulesDiv.addEventListener("change", () => { lastExtract = null; renderExtract(null); });
+
+  loadPreset();
+})();
+</script>

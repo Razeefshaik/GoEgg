@@ -1,5 +1,12 @@
 # pareg — a parallel e-graph / equality-saturation engine in Go
 
+> This is the **interactive showcase branch** (`showcase`): `showcase/index.html`
+> is a self-contained, JS-ported visualization of the sequential algorithm you
+> can open in any browser (no build step) to step through matching, applying,
+> and rebuilding one round at a time. It's a faithful re-implementation for
+> visualization, not the compiled Go engine — see `master` for that, or
+> `release/lib` for the tagged library distribution.
+
 `pareg` is an [e-graph](https://en.wikipedia.org/wiki/E-graph) (equality
 graph) library with equality-saturation-style term rewriting, built the way
 [`egg`](https://egraphs-good.github.io/) works in Rust — union-find over
