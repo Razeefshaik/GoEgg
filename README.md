@@ -261,3 +261,7 @@ for why two terms are equal, and the cost model is pluggable but only
 rebuild, Jacobi extraction, chunked matching — is the part meant to be
 new and reusable; a real optimizer would still want relational
 e-matching on top.
+
+## License
+
+[MIT](LICENSE)
