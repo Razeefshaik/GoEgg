@@ -1,4 +1,4 @@
-# pareg — a parallel e-graph / equality-saturation engine in Go
+# GoEgg — a parallel e-graph / equality-saturation engine in Go
 
 > This is the **library distribution branch** (`release/lib`): source comments
 > are trimmed to exported-symbol doc comments only (what `go doc` /
@@ -9,7 +9,7 @@
 go get github.com/Razeefshaik/GoEgg@v0.1.0
 ```
 
-`pareg` is an [e-graph](https://en.wikipedia.org/wiki/E-graph) (equality
+`GoEgg` is an [e-graph](https://en.wikipedia.org/wiki/E-graph) (equality
 graph) library with equality-saturation-style term rewriting, built the way
 [`egg`](https://egraphs-good.github.io/) works in Rust — union-find over
 e-classes, a hashcons memo table, and a deferred "rebuild" that restores
